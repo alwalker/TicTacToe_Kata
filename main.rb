@@ -12,3 +12,7 @@ end
 put '/tictactoe/:gameId/addPlayer/:playerId' do
 	return TicTacToeController.add_player_to_game(params[:gameId], params[:playerId])
 end
+
+delete '/tictactoe/:gameId' do
+	return TicTacToeController.delete_game(params[:gameId])
+end

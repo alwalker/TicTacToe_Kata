@@ -13,7 +13,7 @@ class TicTacToeController
 			game = TicTacToe.create_new_game playerId
 		rescue => e
 			puts e
-			return [500, e]
+			return [500, e.message]
 		end
 
 		return [200, game.to_json]
@@ -62,33 +62,13 @@ class TicTacToeController
 	end
 
 	def self.delete_game(gameId)
-		if (gameId.nil? || gameId.empty?)
-			return [500, 'Invalid gameId']
-		end
-
 		begin
-			db = CouchRest.database('https://alwalker.cloudant.com/ttgp_poc_db/')
+			game = TicTacToe.get_existing_game gameId
+			game.delete
 		rescue => e
-			@logger.error("Error retrieving database: #{$!}")
-			@logger.error("Backtrace:\n\t#{e.backtrace.join("\n\t")}")
-			return [500, "Couldn't retrieve database"]
-		end		
-		begin
-			game = db.get(gameId)
-		rescue => e
-			@logger.error("Error retrieving game: #{$!}")
-			@logger.error("Backtrace:\n\t#{e.backtrace.join("\n\t")}")
-			return [500, "Couldn't retrieve game"]
+			return [500, e.message]
 		end
-
-		begin
-			db.delete_doc(game)
-		rescue => e
-			@logger.error("Error deleting game: #{$!}")
-			@logger.error("Backtrace:\n\t#{e.backtrace.join("\n\t")}")
-			return [500, "Couldn't delete game"]
-		end
-
+		
 		return 200
 	end
 end

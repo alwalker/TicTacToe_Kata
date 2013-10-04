@@ -11,8 +11,8 @@ class TicTacToeController
 	def self.create_new_game(playerId)
 		begin
 			game = TicTacToe.create_new_game playerId
+			game.save
 		rescue => e
-			puts e
 			return [500, e.message]
 		end
 
@@ -20,42 +20,12 @@ class TicTacToeController
 	end
 
 	def self.add_player_to_game(gameId, playerId)
-		if (playerId.nil? || playerId.empty?)
-			return [500, 'Invalid playerId']
-		end
-		if (gameId.nil? || gameId.empty?)
-			return [500, 'Invalid gameId']
-		end
-
 		begin
-			db = CouchRest.database('https://alwalker.cloudant.com/ttgp_poc_db/')
+			game = TicTacToe.get_existing_game gameId
+			game.add_player playerId
+			game.save
 		rescue => e
-			@logger.error("Error retrieving database: #{$!}")
-			@logger.error("Backtrace:\n\t#{e.backtrace.join("\n\t")}")
-			return [500, "Couldn't retrieve database"]
-		end		
-		begin
-			game = db.get(gameId)
-		rescue => e
-			@logger.error("Error retrieving game: #{$!}")
-			@logger.error("Backtrace:\n\t#{e.backtrace.join("\n\t")}")
-			return [500, "Couldn't retrieve game"]
-		end
-
-		if (game['players'].length >= 2)
-			return [500, 'Game is already full']
-		end
-		if(game['players'].length == 1 && game['players'][0] == playerId)
-			return [500, 'This player is already playing']
-		end
-		game['players'].push(playerId)
-
-		begin
-			db.save_doc(game)
-		rescue => e
-			@logger.error("Error saving game: #{$!}")
-			@logger.error("Backtrace:\n\t#{e.backtrace.join("\n\t")}")
-			return [500, "Couldn't save game"]
+			return [500, e.message]
 		end
 
 		return [200, game.to_json]
@@ -68,7 +38,7 @@ class TicTacToeController
 		rescue => e
 			return [500, e.message]
 		end
-		
+
 		return 200
 	end
 end

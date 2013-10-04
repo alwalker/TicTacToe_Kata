@@ -3,17 +3,7 @@ require 'json'
 require 'logger'
 
 class TicTacToe
-	def initialize(board, players, db)
-		@logger = Logger.new(STDOUT)
-		@logger.level = Logger::DEBUG
-
-		@id = SecureRandom.uuid
-		@board = board
-		@players = players
-		@db = db
-	end
-
-	def initialize(id, rev, board, players, db)
+	def initialize(board, players, db, id=SecureRandom.uuid, rev=nil)
 		@logger = Logger.new(STDOUT)
 		@logger.level = Logger::DEBUG
 
@@ -21,7 +11,7 @@ class TicTacToe
 		@rev = rev
 		@board = board
 		@players = players
-		@db = db		
+		@db = db
 	end
 
 	def self.create_new_game(playerId)
@@ -37,15 +27,14 @@ class TicTacToe
 			raise 'Could not retrieve database'
 		end
 
-		game = TicTacToe.new([[nil, nil, nil], [nil, nil, nil], [nil, nil, nil]], [playerId], db)
-		game.save
+		game = TicTacToe.new([[nil, nil, nil], [nil, nil, nil], [nil, nil, nil]], [playerId], db)		
 
 		return game
 	end
 
 	def self.get_existing_game(gameId)
 		if (gameId.nil? || gameId.empty?)
-			return [500, 'Invalid gameId']
+			raise ArgumentError, 'Invalid gameId'
 		end
 
 		begin
@@ -66,7 +55,25 @@ class TicTacToe
 			raise 'Could not retrieve game'
 		end
 
-		return TicTacToe.new(game['_id'], game['_rev'], game['board'], game['players'], db)
+		return TicTacToe.new(game['board'], game['players'], db, game['_id'], game['_rev'])
+	end
+
+
+
+	def add_player(playerId)
+		if (playerId.nil? || playerId.empty?)
+			raise ArgumentError, 'Invalid playerId'
+		end
+
+		if (@players.length >= 2)
+			raise 'Game is already full'
+		end
+
+		if(@players.length == 1 && @players[0] == playerId)
+			raise 'This player is already playing'
+		end
+
+		@players.push(playerId)
 	end
 
 
@@ -78,7 +85,11 @@ class TicTacToe
 
 	def save
 		begin
-			@db.save_doc({'_id' => @id, 'players' => @players, 'board' => @board})
+			if @rev.nil?
+				@db.save_doc({'_id' => @id, 'players' => @players, 'board' => @board})
+			else				
+				@db.save_doc({'_id' => @id, '_rev' => @rev, 'players' => @players, 'board' => @board})
+			end
 		rescue => e
 			@logger.error("Error saving game: #{$!}")
 			@logger.error("Backtrace:\n\t#{e.backtrace.join("\n\t")}")

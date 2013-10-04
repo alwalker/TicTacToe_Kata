@@ -1,32 +1,19 @@
-require 'couchrest'
-require 'json'
+require './tictactoe'
 
 class TicTacToeController
-	def self.create_new_game(playerId) 
-		if (playerId.nil? || playerId.empty?)
-			return [500, 'Invalid playerId']
-		end
+	@@logger = Logger.new(STDOUT)
 
+	def self.initialize
+		puts "constructing"
+		@@logger.level = Logger::DEBUG
+	end
+
+	def self.create_new_game(playerId)
 		begin
-			db = CouchRest.database('https://alwalker.cloudant.com/ttgp_poc_db/')
+			game = TicTacToe.create_new_game playerId
 		rescue => e
-			@logger.error("Error retrieving database: #{$!}")
-			@logger.error("Backtrace:\n\t#{e.backtrace.join("\n\t")}")
-			return [500, "Couldn't retrieve database"]
-		end
-
-		game = {
-			'_id' => SecureRandom.uuid,
-			'players' => [playerId],
-			'board' => [[nil, nil, nil], [nil, nil, nil], [nil, nil, nil]]
-		}
-
-		begin
-			db.save_doc(game)
-		rescue => e
-			@logger.error("Error saving game: #{$!}")
-			@logger.error("Backtrace:\n\t#{e.backtrace.join("\n\t")}")
-			return [500, "Couldn't save game"]
+			puts e
+			return [500, e]
 		end
 
 		return [200, game.to_json]

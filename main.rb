@@ -1,4 +1,5 @@
 require 'sinatra'
+require 'json'
 require './tictactoe_controller'
 
 get '/' do
@@ -15,4 +16,9 @@ end
 
 delete '/tictactoe/:gameId' do
 	return TicTacToeController.delete_game(params[:gameId])
+end
+
+post '/tictactoe/:gameId/move' do
+	request.body.rewind
+	return TicTacToeController.move(params[:gameId], JSON.parse(request.body.read))
 end

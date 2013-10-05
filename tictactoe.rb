@@ -76,12 +76,38 @@ class TicTacToe
 		@players.push(playerId)
 	end
 
+	def move (move)
+		if @players.length != 2
+			raise 'Wrong number of players'
+		end
 
+		xturn = oturn = false
+		xs, os = get_x_o_count
 
+		if xs == os
+			xturn = true
+		elsif (xs > os)
+			yturn = true
+		else
+			raise 'Board in invalid state'
+		end
 
-	def to_json
-		return {'id' => @id, 'players' => @players, 'board' => @board}.to_json
-	end
+		if xturn and move.player != @players[0]
+			raise 'Wrong player'
+		end
+
+		if yturn and move.player != @players[1]
+			raise 'Wrong player'
+		end
+
+		if @board[move.x][move.y].nil?
+			@board[move.x][move.y] = xturn ? 'X' : 'O'
+		else
+			raise 'This position has already been played'
+		end
+
+		return check_for_end
+	end	
 
 	def save
 		begin
@@ -105,5 +131,42 @@ class TicTacToe
 			@logger.error("Backtrace:\n\t#{e.backtrace.join("\n\t")}")
 			raise 'Could not delete game'
 		end
+	end
+
+	def to_json
+		return {'id' => @id, 'players' => @players, 'board' => @board}.to_json
+	end
+
+	private
+
+	def get_x_o_count
+		xs = 0
+		os = 0
+
+		@board.each {|row| row.each {|col| if col == 'X' then xs = xs + 1 elsif col == 'O' then os = os + 1 end}}
+
+		return xs, os
+	end
+
+	def check_for_end
+		if @board[0][0] == @board[0][1] && @board[0][0] == @board[0][2]
+			return true
+		elsif @board[1][0] == @board[1][1] && @board[1][0] == @board[1][2]
+			return true
+		elsif @board[2][0] == @board[2][1] && @board[2][0] == @board[2][2]
+			return true
+		elsif @board[0][0] == @board[1][0] && @board[0][0] == @board[2][0]
+			return true
+		elsif @board[0][1] == @board[1][1] && @board[0][1] == @board[1][2]
+			return true
+		elsif @board[0][2] == @board[1][2] && @board[0][2] == @board[2][2]
+			return true
+		elsif @board[0][0] == @board[1][1] && @board[0][0] == @board[2][2]
+			return true
+		elsif @board[2][0] == @board[1][1] && @board[2][0] == @board[0][2]
+			return true
+		else
+			return false
+		end			
 	end
 end

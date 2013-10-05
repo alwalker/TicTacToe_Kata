@@ -1,4 +1,5 @@
 require './tictactoe'
+require './move'
 
 class TicTacToeController
 	@@logger = Logger.new(STDOUT)
@@ -40,5 +41,22 @@ class TicTacToeController
 		end
 
 		return 200
+	end
+
+	def self.move(gameId, body)
+		begin
+			game = TicTacToe.get_existing_game gameId
+			move = Move.create_move(body)
+			ended = game.move(move)
+			game.save
+		rescue => e
+			return [500, e.message]
+		end
+
+		if !ended 
+			return [200, game.to_json]
+		else
+			return [200, 'you win!']
+		end
 	end
 end
